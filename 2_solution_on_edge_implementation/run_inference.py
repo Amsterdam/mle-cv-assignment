@@ -7,7 +7,7 @@ output_dir = Path("/usr/src/app/output")
 output_dir.mkdir(exist_ok=True)
 
 # Load the pre-trained YOLO model
-model = torch.hub.load('ultralytics/yolov5', 'yolov5s')  # Or specify a version of YOLO
+model = torch.hub.load('ultralytics/yolov5', 'yolov5s')
 
 # Run inference on all images in the input directory
 for image_path in input_dir.glob("*.jpg"):
