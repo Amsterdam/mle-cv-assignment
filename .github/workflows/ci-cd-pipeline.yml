@@ -1,61 +1,58 @@
-trigger:
-- main
+name: CI/CD Pipeline
 
-pool:
-  vmImage: 'ubuntu-latest'
+on:
+  push:
+    branches:
+      - main
 
 jobs:
-- job: BuildAndScan
-  displayName: 'Build Docker image, perform vulnerability scan, linting, and formatting'
-  steps:
+  build_and_scan:
+    runs-on: ubuntu-latest
 
-  # Step 1: Cache Trivy database to avoid downloading it every time
-  - task: Cache@2
-    inputs:
-      key: 'trivy-db-$(Agent.OS)-$(Build.SourceBranchName)'
-      restoreKeys: |
-        trivy-db-$(Agent.OS)-
-      path: ~/.cache/trivy
+    steps:
+    # Step 1: Checkout repository
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-  # Step 2: Install necessary tools (Trivy, flake8, black)
-  - script: |
-      sudo apt-get update
-      sudo apt-get install -y wget
-      wget https://github.com/aquasecurity/trivy/releases/download/v0.38.0/trivy_0.38.0_Linux-64bit.deb
-      sudo dpkg -i trivy_0.38.0_Linux-64bit.deb
-      python3 -m pip install --upgrade pip
-      python3 -m pip install flake8 black
-    displayName: 'Install Trivy, flake8, and black'
+    # Step 2: Set up Python environment (for flake8, black)
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.10'
 
-  # Step 3: Refresh the Trivy DB to ensure it's up-to-date
-  - script: |
-      trivy --refresh
-    displayName: 'Refresh Trivy DB'
+    # Step 3: Install dependencies for linting and formatting tools (flake8, black)
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 black
 
-  # Step 4: Run Linting (flake8)
-  - script: |
-      flake8 . --max-line-length=88
-    displayName: 'Run flake8 Linting'
-    continueOnError: true  # Continue the pipeline if linting issues are found
+    # Step 4: Run Linting (flake8)
+    - name: Run flake8 Linting
+      run: |
+        flake8 . --max-line-length=88
+      continue-on-error: true  # Continue if linting issues found
 
-  # Step 5: Run Code Formatting (black)
-  - script: |
-      black --check --diff .
-    displayName: 'Run black Formatting Check'
-    continueOnError: true  # Continue the pipeline if formatting issues are found
+    # Step 5: Run Code Formatting Check (black)
+    - name: Run black Formatting Check
+      run: |
+        black --check --diff .
+      continue-on-error: false  # Continue if formatting issues found
 
-  # Step 6: Build Docker image
-  - task: Docker@2
-    displayName: 'Build Docker image'
-    inputs:
-      command: 'build'
-      containerRegistry: 'yourContainerRegistry'  # Replace with your registry
-      repository: 'yolo_on_edge'
-      dockerfile: '**/Dockerfile'  # Assuming Dockerfile is at the root
-      tags: '$(Build.BuildId)'
+    # Step 6: Install Trivy for security scanning
+    - name: Install Trivy
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y wget
+        wget https://github.com/aquasecurity/trivy/releases/download/v0.38.0/trivy_0.38.0_Linux-64bit.deb
+        sudo dpkg -i trivy_0.38.0_Linux-64bit.deb
 
-  # Step 7: Perform the Trivy security scan with cached DB
-  - script: |
-      trivy fs --severity HIGH,CRITICAL --exit-code 1 .  # Scan for high and critical vulnerabilities
-    displayName: 'Run Trivy Security Scan'
-    continueOnError: true  # To allow the pipeline to continue even if the scan fails
+    # Step 7: Run Trivy to scan for vulnerabilities in the Dockerfile
+    - name: Run Trivy Security Scan
+      run: |
+        trivy fs --severity HIGH,CRITICAL --exit-code 1 .  # Scan the Dockerfile and the entire directory for vulnerabilities
+      continue-on-error: true  # Allows the pipeline to continue even if vulnerabilities are found
+
+    # Step 8: Build Docker image
+    - name: Build Docker image
+      run: |
+        docker build -t yolo_on_edge .
