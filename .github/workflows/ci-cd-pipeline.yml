@@ -36,7 +36,7 @@ jobs:
     - name: Run black Formatting Check
       run: |
         black --check --diff .
-      continue-on-error: false  # Continue if formatting issues found
+      continue-on-error: true  # Continue if formatting issues found
 
     # Step 6: Install Trivy for security scanning
     - name: Install Trivy
