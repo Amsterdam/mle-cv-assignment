@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "mle-cv-assignment"
+name = "2_colution_on_edge_implementation"
 version = "0.1.0"
 description = ""
 authors = ["e.calleris"]
