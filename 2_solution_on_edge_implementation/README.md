@@ -20,7 +20,7 @@ This project uses the [BDD100k dataset](https://bdd-data.berkeley.edu/) (10k tes
 
 ```bash
 git clone https://github.com/Amsterdam/mle-cv-assignment.git
-cd 2-solution-on-edge-implementation
+cd 2_solution_on_edge_implementation
 ```
 
 2. Build Docker Image:
@@ -33,7 +33,7 @@ docker build -t yolo_on_edge .
 
 Run the container and mount the input and output directories for image processing:
 ```bash
-docker run --rm -v $(pwd)/2-solution-on-edge-implementation/input:/usr/src/app/input -v $(pwd)/2-solution-on-edge-implementation/output:/usr/src/app/output yolo_on_edge
+docker run --rm -v $(pwd)/2_solution_on_edge_implementation/input:/usr/src/app/input -v $(pwd)/2_solution_on_edge_implementation/output:/usr/src/app/output yolo_on_edge
 ```
 
 4. Check Output: Processed images with bounding boxes will appear in output/.
